@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\EmployeeRequest;
+use App\Http\Resources\EmployeeResource;
+use App\Models\Company;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 
 class EmployeeController extends Controller
@@ -11,9 +15,15 @@ class EmployeeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $employees = Employee::all();
+
+        if ($request->expectsJson()) {
+            return response()->json(EmployeeResource::collection($employees));
+        } else {
+            return view('employees.index')->with('employees', $employees);
+        }
     }
 
     /**
@@ -23,7 +33,8 @@ class EmployeeController extends Controller
      */
     public function create()
     {
-        //
+        $companies = Company::get(["name", "id"]);
+        return view('employees.create')->with('companies', $companies);
     }
 
     /**
@@ -32,9 +43,16 @@ class EmployeeController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(EmployeeRequest $request)
     {
-        //
+        $employee = new Employee();
+        $employee->first_name = $request->first_name;
+        $employee->last_name = $request->last_name;
+        $employee->email = $request->email;
+        $employee->company_id = $request->company_id;
+        $employee->phone = $request->phone;
+        $employee->save();
+        return redirect()->route('employees.index');
     }
 
     /**
@@ -56,7 +74,9 @@ class EmployeeController extends Controller
      */
     public function edit($id)
     {
-        //
+        $companies = Company::get(["name", "id"]);
+        $employee = Employee::find($id);
+        return view('employees.edit')->with('companies', $companies)->with('employee', $employee);
     }
 
     /**
@@ -66,9 +86,15 @@ class EmployeeController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(EmployeeRequest $request, Employee $employee)
     {
-        //
+        $employee->first_name = $request->first_name;
+        $employee->last_name = $request->last_name;
+        $employee->email = $request->email;
+        $employee->company_id = $request->company_id;
+        $employee->phone = $request->phone;
+        $employee->save();
+        return redirect()->route('employees.index');
     }
 
     /**
@@ -77,8 +103,11 @@ class EmployeeController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Employee $employee)
     {
-        //
+        $employee->delete();
+
+        return redirect()->route('employees.index')
+             ->withSuccess(__('Employee delete successfully.'));
     }
 }
