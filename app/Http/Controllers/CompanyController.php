@@ -2,7 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
+use App\Http\Requests\CompanyRequest;
+use App\Http\Resources\CompanyResource;
 use Illuminate\Http\Request;
+use App\Mail\NewCompanyNotification;
+use Illuminate\Support\Facades\Mail;
 
 class CompanyController extends Controller
 {
@@ -11,9 +16,15 @@ class CompanyController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $companies = Company::all();
+
+        if ($request->expectsJson()) {
+            return response()->json(CompanyResource::collection($companies));
+        } else {
+            return view('companies.index')->with('companies', $companies);
+        }
     }
 
     /**
@@ -23,7 +34,7 @@ class CompanyController extends Controller
      */
     public function create()
     {
-        //
+        return view('companies.create');
     }
 
     /**
@@ -32,9 +43,17 @@ class CompanyController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(CompanyRequest $request)
     {
-        //
+        $company = new Company();
+        $company->name = $request->name;
+        $company->email = $request->email;
+        $imagePath = $request->file('logo')->store('public');
+        $company->logo = $imagePath;
+        $company->website = $request->website;
+        $company->save();
+        Mail::to($request->email)->send(new NewCompanyNotification($company));
+        return redirect()->route('companies.index');
     }
 
     /**
@@ -56,7 +75,8 @@ class CompanyController extends Controller
      */
     public function edit($id)
     {
-        //
+        $company = Company::find($id);
+        return view('companies.edit')->with('company', $company);
     }
 
     /**
@@ -66,9 +86,15 @@ class CompanyController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(CompanyRequest $request, Company $company)
     {
-        //
+        $company->name = $request->name;
+        $company->email = $request->email;
+        $imagePath = $request->file('logo')->store('public');
+        $company->logo = $imagePath;
+        $company->website = $request->website;
+        $company->save();
+        return redirect()->route('companies.index');
     }
 
     /**
@@ -77,8 +103,11 @@ class CompanyController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Company $company)
     {
-        //
+        $company->delete();
+
+        return redirect()->route('companies.index')
+             ->withSuccess(__('Company delete successfully.'));
     }
 }
