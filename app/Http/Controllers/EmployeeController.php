@@ -13,16 +13,20 @@ class EmployeeController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response|\Illuminate\View\View
      */
     public function index(Request $request)
     {
+        // Retrieve all employees from the database
         $employees = Employee::all();
 
         if ($request->expectsJson()) {
+            // If the request expects JSON, return a JSON response
             return response()->json(EmployeeResource::collection($employees));
         } else {
-            return view('employees.index')->with('employees', $employees);
+            // If not, return the HTML view with employees data
+            return view('employees.index', compact('employees'));
         }
     }
 
@@ -33,81 +37,120 @@ class EmployeeController extends Controller
      */
     public function create()
     {
-        $companies = Company::get(["name", "id"]);
-        return view('employees.create')->with('companies', $companies);
+        // Retrieve a list of companies with 'name' and 'id' fields
+        $companies = Company::select(['name', 'id'])->get();
+
+        // Load the 'employees.create' view and pass the 'companies' variable to it
+        return view('employees.create', compact('companies'));
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Http\Requests\EmployeeRequest  $request
      * @return \Illuminate\Http\Response
      */
     public function store(EmployeeRequest $request)
     {
+        // Create a new Employee instance
         $employee = new Employee();
-        $employee->first_name = $request->first_name;
-        $employee->last_name = $request->last_name;
-        $employee->email = $request->email;
-        $employee->company_id = $request->company_id;
-        $employee->phone = $request->phone;
+
+        // Set the properties of the Employee from the request data
+        $employee->first_name = $request->input('first_name');
+        $employee->last_name = $request->input('last_name');
+        $employee->email = $request->input('email');
+        $employee->company_id = $request->input('company_id');
+        $employee->phone = $request->input('phone');
+
+        // Save the new Employee to the database
         $employee->save();
-        return redirect()->route('employees.index');
+
+        if ($request->expectsJson()) {
+            // Return a JSON response for API requests
+            return response()->json(['message' => 'Employee created successfully', 'Employee' => EmployeeResource::make($employee)], 201);
+        } else {
+            // Redirect to the 'employees.index' route after successful creation
+            return redirect()->route('employees.index');
+        }
     }
 
     /**
-     * Display the specified resource.
+     * Display the details of a specific employee.
      *
-     * @param  int  $id
+     * @param  \App\Models\Employee  $employee
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Employee $employee,Request $request)
     {
-        //
+        if ($request->expectsJson()) {
+            // Return a JSON response for API requests
+            return response()->json(EmployeeResource::make($employee));
+        } else {
+            // Load the 'employees.show' view and pass the 'employee' variable to it
+            return view('employees.show', compact('employee'));
+        }
     }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int  $id
+     * @param  \App\Models\Employee  $employee
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Employee $employee)
     {
-        $companies = Company::get(["name", "id"]);
-        $employee = Employee::find($id);
-        return view('employees.edit')->with('companies', $companies)->with('employee', $employee);
+        // Retrieve a list of companies with 'name' and 'id' fields
+        $companies = Company::select(['name', 'id'])->get();
+
+        // Check if the employee exists
+        if (!$employee) {
+            // Redirect to a 404 page or display an error message
+            return abort(404);
+        }
+
+        // Load the 'employees.edit' view and pass the 'companies' and 'employee' variables using compact
+        return view('employees.edit', compact('companies', 'employee'));
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param  \App\Http\Requests\EmployeeRequest  $request
+     * @param  \App\Models\Employee  $employee
      * @return \Illuminate\Http\Response
      */
     public function update(EmployeeRequest $request, Employee $employee)
     {
-        $employee->first_name = $request->first_name;
-        $employee->last_name = $request->last_name;
-        $employee->email = $request->email;
-        $employee->company_id = $request->company_id;
-        $employee->phone = $request->phone;
-        $employee->save();
-        return redirect()->route('employees.index');
+        // Update the Employee model with values from the request
+        $employee->update([
+            'first_name' => $request->input('first_name'),
+            'last_name' => $request->input('last_name'),
+            'email' => $request->input('email'),
+            'company_id' => $request->input('company_id'),
+            'phone' => $request->input('phone'),
+        ]);
+
+        if ($request->expectsJson()) {
+            // Return a JSON response for API requests
+            return response()->json(['message' => 'Employee updated successfully', 'Employee' => EmployeeResource::make($employee)], 201);
+        } else {
+            // Redirect to the 'employees.index' route after successful update
+            return redirect()->route('employees.index');
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param  \App\Models\Employee  $employee
      * @return \Illuminate\Http\Response
      */
     public function destroy(Employee $employee)
     {
+        // Delete the employee from the database
         $employee->delete();
 
-        return redirect()->route('employees.index')
-             ->withSuccess(__('Employee delete successfully.'));
+        // Redirect to the 'employees.index' route with a success message
+        return redirect()->route('employees.index')->withSuccess(__('Employee deleted successfully.'));
     }
 }
