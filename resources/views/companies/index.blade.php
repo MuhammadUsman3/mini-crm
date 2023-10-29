@@ -44,13 +44,13 @@
                                     <td><img src="{{ Storage::url($c->logo) }}"/></td>
                                     <td>{{ $c->website }}</td>
                                     <td>
-                                        <form method="post" action="{{route('companies.destroy',$c->id)}}">
+                                        <a class="btn btn-small btn-info" href="{{ URL::to('companies/' . $c->id . '') }}">Show</a>
+                                        | <a class="btn btn-small btn-info" href="{{ URL::to('companies/' . $c->id . '/edit') }}">Edit</a>
+                                        | <form method="post" action="{{route('companies.destroy',$c->id)}}">
                                             @method('delete')
                                             @csrf
                                             <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                         </form>
-
-                                        <a class="btn btn-small btn-info" href="{{ URL::to('companies/' . $c->id . '/edit') }}">Edit</a>
                                     </td>
                                 </tr>
                             @endforeach

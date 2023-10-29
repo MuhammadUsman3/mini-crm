@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Request;
 
 class CompanyRequest extends FormRequest
 {
@@ -21,13 +22,18 @@ class CompanyRequest extends FormRequest
      *
      * @return array
      */
-    public function rules()
+    public function rules(Request $request)
     {
-        return [
+        $rule = [
             'name' => 'required',
             'email' => 'required',
-            'logo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'website' => 'required',
         ];
+
+        if (!$request->expectsJson()) {
+            $rule['logo'] = 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048';
+        }
+
+        return $rule;
     }
 }

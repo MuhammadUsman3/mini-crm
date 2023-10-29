@@ -21,4 +21,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::resource('companies', CompanyController::class);
+Route::post('companies/imageUpload/{company}', 'App\Http\Controllers\CompanyController@imageUpload');
 Route::resource('employees', EmployeeController::class);
