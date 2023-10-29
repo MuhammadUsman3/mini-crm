@@ -44,12 +44,13 @@
                                     <td>{{$e->company->name}}</td>
                                     <td>{{ $e->phone }}</td>
                                     <td>
-                                        <form method="post" action="{{route('employees.destroy',$e->id)}}">
+                                        <a class="btn btn-small btn-info" href="{{ URL::to('employees/' . $e->id . '') }}">Show</a>
+                                        | <a class="btn btn-small btn-info" href="{{ URL::to('employees/' . $e->id . '/edit') }}">Edit</a>
+                                        | <form method="post" action="{{route('employees.destroy',$e->id)}}">
                                             @method('delete')
                                             @csrf
                                             <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                         </form>
-                                        <a class="btn btn-small btn-info" href="{{ URL::to('employees/' . $e->id . '/edit') }}">Edit</a>
                                     </td>
                                 </tr>
                             @endforeach
